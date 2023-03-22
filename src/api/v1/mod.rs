@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 mod query;
 
-pub use query::Query;
+pub use query::{Query,Direction};
 
 use firestore_grpc::v1::{
     CreateDocumentRequest,GetDocumentRequest,

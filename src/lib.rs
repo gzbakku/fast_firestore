@@ -160,7 +160,7 @@ pub use common::{Error,ErrType};
 pub use db::DB;
 pub use api::v1::{
     ApiV1,Query,Doc,BatchRead,
-    BatchWriteOpp,BatchWrite
+    BatchWriteOpp,BatchWrite,Direction
 };
 pub use parser::ParserError;
 
