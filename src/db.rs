@@ -32,7 +32,7 @@ impl DB{
         return Ok(self.token.clone());
     }
     pub async fn check_time(&mut self)->Result<(),Error>{
-        if self.time.elapsed().as_secs() > 20000{
+        if self.time.elapsed().as_secs() > 1500{
             self.token = generate_token(&self.path).await?;
         }
         return Ok(());

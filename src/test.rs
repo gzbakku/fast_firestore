@@ -5,6 +5,34 @@ use crate::{
 // use futures::future::join_all;
 use json::object;
 
+pub async fn custom(path:String,project_id:String)->Result<(),Error>{
+
+    let mut client = DB::connect(path,project_id).await?;
+
+    if false{
+        client.create_document(
+            "/users/login_tokens",
+            "login", "token1", &object!{
+                "token_id":"akku",
+                "age":20
+            }
+        ).await?;
+    }
+
+    if true{
+        let mut query = DB::new_query();
+        query.parent("/users/login_tokens");
+        query.from("login",false);
+        query.add_where("token_id","==","akku".into());
+        query.limit(2);
+        let res = query.run(&mut client).await?;
+        println!("query res : {:?}",res);
+    }
+
+    Ok(())
+
+}
+
 pub async fn init(path:String,project_id:String)->Result<(),Error>{
 
     let mut client = DB::connect(path,project_id).await?;

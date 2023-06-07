@@ -16,9 +16,9 @@ pub use parser::ParserError;
 #[tokio::main]
 async fn main()->Result<(),Error>{
 
-    let creds_path = "../data/firestore.json".to_string();
+    let creds_path = "../creds/firestore_gzbemail.json".to_string();
 
-    match test::init(
+    match test::custom(
         creds_path,
         "gzbemail-b145b".to_string()
     ).await{
