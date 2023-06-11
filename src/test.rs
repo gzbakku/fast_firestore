@@ -20,6 +20,19 @@ pub async fn custom(path:String,project_id:String)->Result<(),Error>{
     }
 
     if true{
+        match client.get_document(
+            "/users/login_tokens",
+        ).await{
+            Ok(_)=>{
+                println!("get success");
+            },
+            Err(_e)=>{
+                println!("get_failed => {:?}",_e);
+            }
+        }
+    }
+
+    if false{
         let mut query = DB::new_query();
         query.parent("/users/login_tokens");
         query.from("login",false);

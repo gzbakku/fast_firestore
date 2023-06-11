@@ -10,6 +10,7 @@ use std::time::SystemTimeError;
 #[derive(Debug)]
 pub enum ErrType{
     None,
+    NotFound,
     // PathError(PathError),
     SystemTimeError(SystemTimeError),
     ParserError(ParserError),

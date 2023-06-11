@@ -1,6 +1,6 @@
 
 use std::convert::From;
-use crate::{DB,Error,common::ErrType};
+use crate::{DB,Error};
 use async_trait::async_trait;
 use json::JsonValue;
 use crate::parser;
@@ -19,7 +19,6 @@ use firestore_grpc::v1::{
     BatchGetDocumentsRequest,
     batch_get_documents_response::Result as BatchResultEnum
 };
-use firestore_grpc::tonic::Code;
 
 #[async_trait]
 pub trait ApiV1{
@@ -106,17 +105,7 @@ impl ApiV1 for DB{
             mask: None,
             consistency_selector:None
         }).await?;
-        let res;
-        match self.channel.get_document(req).await{
-            Ok(r)=>{res = r;},
-            Err(_e)=>{
-                let _c = _e.code();
-                if _c == Code::NotFound{
-                    return Err(ErrType::NotFound.into());
-                }
-                return Err(_e.into());
-            }
-        }
+        let res = self.channel.get_document(req).await?;
         let raw_doc = res.into_inner();
         let parsed = parser::DocToJson(&raw_doc);
         return Ok(Doc{

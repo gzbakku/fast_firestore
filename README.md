@@ -1,12 +1,13 @@
 # fast_firestore
 ## Fast Plug and Play Firestore Lib
 
-this is a fast, plug and play non comprehensive firestore library, a lot of complexity is removed to make the dev experience smooth. 
+this is a fast, plug and play firestore library using grpc as backend, no need for token management, auth or using custom data management apis you can use json crate to make and edit documents.it is as simple to use as its gets in rust.
 
 - Mananged GCP Tokens
+- json based object management 
 - all core apis
-- no supprt for transformaers
-- all native firestores files are only supported for reading
+- no support for transformers
+- all native firestore data types are only read supported as a custom json object
 
 ```rust
 
