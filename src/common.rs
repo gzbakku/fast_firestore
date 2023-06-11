@@ -23,7 +23,7 @@ pub enum ErrType{
 
 #[allow(dead_code)]
 impl ErrType{
-    fn not_found(&self)->bool{
+    pub fn not_found(&self)->bool{
         match self{
             ErrType::NotFound=>{true},
             _=>{false}
