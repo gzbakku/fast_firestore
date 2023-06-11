@@ -21,6 +21,16 @@ pub enum ErrType{
     Static(&'static str)
 }
 
+#[allow(dead_code)]
+impl ErrType{
+    fn not_found(&self)->bool{
+        match self{
+            ErrType::NotFound=>{true},
+            _=>{false}
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Error{
     pub _e:ErrType
