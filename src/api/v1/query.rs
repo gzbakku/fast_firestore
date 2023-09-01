@@ -11,9 +11,23 @@ use firestore_grpc::google::firestore::v1::{
         CollectionSelector,Order,FieldReference,
         Filter,CompositeFilter,FieldFilter,
         filter::FilterType
-    }
+    },
+    value::ValueType,
+    ArrayValue
 };
 
+// ValueType
+
+///op == "<" less then
+///op == "<=" less then equal
+///op == ">" more then
+///op == ">=" more then equal 
+///op == "==" equal
+///op == "!=" not equal
+///op == "[]=" array contains
+///op == "in" in array
+///op == "[]<=" array contains any
+///op == "not_in" not_in
 pub fn parse_op_to_int(op:&'static str)->i32{
     if op == "<"{return 1;} else
     if op == "<="{return 2;} else
@@ -32,6 +46,7 @@ pub fn parse_op_to_int(op:&'static str)->i32{
 pub struct Query{
     query_parent:&'static str,
     query_where:Vec<(&'static str,i32,Value)>,
+    query_where_string:Vec<(String,i32,Value)>,
     query_orders:Vec<(&'static str,i32)>,//key,direction,
     query_from:Vec<(&'static str,bool)>,
     query_start_at:Option<(Value,bool)>,
@@ -51,6 +66,7 @@ impl Query{
         Query{
             query_parent:"",
             query_where:Vec::new(),
+            query_where_string:Vec::new(),
             query_orders:Vec::new(),
             query_from:Vec::new(),
             query_start_at:None,
@@ -59,8 +75,34 @@ impl Query{
             query_limit:None,
         }
     }
+    /// for string input use add_where_string
+    ///op == "<" less then
+    ///op == "<=" less then equal
+    ///op == ">" more then
+    ///op == ">=" more then equal 
+    ///op == "==" equal
+    ///op == "!=" not equal
+    ///op == "[]=" array contains
+    ///op == "in" in array
+    ///op == "[]<=" array contains any
+    ///op == "not_in" not_in
     pub fn add_where(&mut self,key:&'static str,op:&'static str,val:JsonValue){
         self.query_where.push(
+            (key,parse_op_to_int(op),parser::JsonValueToDocValue(&val))
+        );
+    }
+    ///op == "<" less then
+    ///op == "<=" less then equal
+    ///op == ">" more then
+    ///op == ">=" more then equal 
+    ///op == "==" equal
+    ///op == "!=" not equal
+    ///op == "[]=" array contains
+    ///op == "in" in array
+    ///op == "[]<=" array contains any
+    ///op == "not_in" not_in
+    pub fn add_where_string(&mut self,key:String,op:&'static str,val:JsonValue){
+        self.query_where_string.push(
             (key,parse_op_to_int(op),parser::JsonValueToDocValue(&val))
         );
     }
@@ -153,7 +195,12 @@ impl Query{
 
 fn build(query:Query)->StructuredQuery{
     let mut build = StructuredQuery::default();
-    if query.query_where.len() > 0{build.r#where = build_filters(query.query_where);}
+    if query.query_where.len() > 0{
+        build.r#where = build_filters(
+            query.query_where,
+            query.query_where_string
+        );
+    }
     if query.query_orders.len() > 0{build.order_by = build_orders(query.query_orders);}
     // println!("order : {:#?}",build.order_by);
     if query.query_from.len() > 0{build.from = build_from(query.query_from);}
@@ -206,12 +253,20 @@ fn build_orders(mut pool:Vec<(&'static str,i32)>)->Vec<Order>{
     return collect;
 }
 
-fn build_filters(mut pool:Vec<(&'static str,i32,Value)>)->Option<Filter>{
+fn build_filters(
+    mut pool_1:Vec<(&'static str,i32,Value)>,
+    mut pool_2:Vec<(String,i32,Value)>
+)->Option<Filter>{
     let mut collect = vec![];
     loop{
-        if pool.len() == 0{break;}
-        let hold = pool.remove(0);
+        if pool_1.len() == 0{break;}
+        let hold = pool_1.remove(0);
         collect.push(build_filter(hold.0.to_string(),hold.1,hold.2));
+    }
+    loop{
+        if pool_2.len() == 0{break;}
+        let hold = pool_2.remove(0);
+        collect.push(build_filter(hold.0,hold.1,hold.2));
     }
     Some(
         Filter{
@@ -224,13 +279,27 @@ fn build_filters(mut pool:Vec<(&'static str,i32,Value)>)->Option<Filter>{
 }
 
 fn build_filter(key:String,op:i32,value:Value)->Filter{
+    let v;
+    if op == 8{
+        v = Value{
+            value_type:Some(
+                ValueType::ArrayValue(
+                    ArrayValue{
+                        values:vec![value]
+                    }
+                )
+            )
+        };
+    } else {
+        v = value;
+    }
     Filter{
         filter_type:Some(FilterType::FieldFilter(FieldFilter{
             field:Some(FieldReference{
                 field_path:key
             }),
             op:op,
-            value:Some(value)
+            value:Some(v)
         }))
     }
 }
