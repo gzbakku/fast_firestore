@@ -11,6 +11,8 @@ use firestore_grpc::v1::{
 use crate::{Error};
 // use crate::{Path};
 
+use json::JsonValue;
+
 const URL: &'static str = "https://firestore.googleapis.com";
 // const DOMAIN: &'static str = "firestore.googleapis.com";
 
@@ -23,7 +25,8 @@ pub struct DB{
     pub path:String,
     pub time:Instant,
     pub token:MetadataValue<Ascii>,
-    pub channel:FirestoreClient<Channel>
+    pub channel:FirestoreClient<Channel>,
+    pub creds:Option<JsonValue>
 }
 
 impl DB{
@@ -33,7 +36,14 @@ impl DB{
     }
     pub async fn check_time(&mut self)->Result<(),Error>{
         if self.time.elapsed().as_secs() > 1500{
-            self.token = generate_token(&self.path).await?;
+            match &self.creds{
+                Some(creds)=>{
+                    self.token = generate_token_json(creds).await?;
+                },
+                None=>{
+                    self.token = generate_token(&self.path).await?;
+                }
+            }
             self.time = Instant::now();
         }
         return Ok(());
@@ -47,7 +57,21 @@ impl DB{
             path:creds_file_location.clone(),
             time:Instant::now(),
             token:generate_token(&creds_file_location).await?,
-            channel:FirestoreClient::connect(URL).await?
+            channel:FirestoreClient::connect(URL).await?,
+            creds:None
+        });
+    }
+    pub async fn connect_json(
+        creds:JsonValue,
+        project_id:String
+    )->Result<DB,Error>{
+        return Ok(DB{
+            project_id:project_id,
+            path:String::new(),
+            time:Instant::now(),
+            token:generate_token_json(&creds).await?,
+            channel:FirestoreClient::connect(URL).await?,
+            creds:Some(creds)
         });
     }
     pub async fn request<T>(&mut self,t:T)->Result<Request<T>,Error>{
@@ -68,6 +92,34 @@ pub async fn generate_token(path:&str)->Result<MetadataValue<Ascii>,Error>{
 pub async fn get_token(path:&str)->Result<String,Error>{
     match gcp_access_token::generator::init(
         path.to_string(),
+        "https://www.googleapis.com/auth/cloud-platform".to_string()
+    ).await{
+        Ok(v)=>{
+            match v["access_token"].as_str(){
+                Some(s)=>{
+                    return Ok(s.to_string());
+                },
+                None=>{
+                    return Err(().into());
+                },
+            }
+        },
+        Err(_e)=>{
+            return Err(().into());
+        }
+    }
+}
+
+pub async fn generate_token_json(creds:&JsonValue)->Result<MetadataValue<Ascii>,Error>{
+    let bearer_token = format!("Bearer {}", get_token_json(creds).await?);
+    let header_value = MetadataValue::from_str(&bearer_token)?;
+    return Ok(header_value);
+}
+
+pub async fn get_token_json(creds:&JsonValue)->Result<String,Error>{
+    match gcp_access_token::generator::init_json(
+        // path.to_string(),
+        creds,
         "https://www.googleapis.com/auth/cloud-platform".to_string()
     ).await{
         Ok(v)=>{
