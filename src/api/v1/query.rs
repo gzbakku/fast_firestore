@@ -149,6 +149,7 @@ impl Query{
 
         let req = db.request(RunQueryRequest{
             parent:parent,
+            explain_options:None,
             query_type:Some(QueryType::StructuredQuery(query)),
             consistency_selector:None
         }).await?;

@@ -5,7 +5,31 @@ use crate::{
 // use futures::future::join_all;
 use json::object;
 
-pub async fn custom(path:String,project_id:String)->Result<(),Error>{
+pub async fn _query(path:String,project_id:String)->Result<(),Error>{
+
+    let mut client = DB::connect(path,project_id).await?;
+
+    if true{
+        let mut query = DB::new_query();
+        // query.parent("/chats");
+        query.from("chats",true);
+        query.add_where("bid","==","e9dbc3171d1329fc0e11a51890334829".into());
+        // query.add_where("private","==",false.into());
+        query.add_where("members","[]=","35fc71edd4da6f83e34f5548de526aeb".into());
+        query.limit(1);
+
+        println!("\n\nquery : {:#?}\n\n",query);
+
+        let res = query.run(&mut client).await?;
+        println!("query res : {:?}",res);
+    }
+
+    Ok(())
+
+}
+
+
+pub async fn _custom(path:String,project_id:String)->Result<(),Error>{
 
     let mut client = DB::connect(path,project_id).await?;
 
@@ -46,7 +70,7 @@ pub async fn custom(path:String,project_id:String)->Result<(),Error>{
 
 }
 
-pub async fn init(path:String,project_id:String)->Result<(),Error>{
+pub async fn _init(path:String,project_id:String)->Result<(),Error>{
 
     let mut client = DB::connect(path,project_id).await?;
 

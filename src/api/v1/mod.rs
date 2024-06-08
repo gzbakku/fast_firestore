@@ -8,6 +8,7 @@ use std::collections::HashMap;
 
 mod query;
 
+#[allow(unused_imports)]
 pub use query::{Query,Direction};
 
 use firestore_grpc::v1::{

@@ -16,11 +16,11 @@ pub use parser::ParserError;
 #[tokio::main]
 async fn main()->Result<(),Error>{
 
-    let creds_path = "../creds/firestore_gzbemail.json".to_string();
+    let creds_path = "../creds/firebase_daachi.json".to_string();
 
-    match test::custom(
+    match test::_query(
         creds_path,
-        "gzbemail-b145b".to_string()
+        "daachi-cd79a".to_string()
     ).await{
         Ok(_)=>{},
         Err(_e)=>{
