@@ -6,6 +6,7 @@ use firestore_grpc::tonic::metadata::errors::InvalidMetadataValue;
 use firestore_grpc::tonic::Status as TonicStatus;
 use crate::{ParserError,/*PathError*/};
 use std::time::SystemTimeError;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub enum ErrType{
@@ -18,7 +19,8 @@ pub enum ErrType{
     TonicError(TonicError),
     InvalidMetadataValue(InvalidMetadataValue),
     FailedTokenGenerate,
-    Static(&'static str)
+    Static(&'static str),
+    String(String)
 }
 
 #[allow(dead_code)]
@@ -31,6 +33,58 @@ impl ErrType{
     }
 }
 
+//--------------------------------
+//result traits
+//--------------------------------
+
+#[allow(dead_code)]
+pub trait ResultCheckAnyToError<T,E>
+where E:Debug{
+    fn to_error(self)->Error;
+    fn on_error_any(self,e:&'static str)->Result<T,Error>;
+}
+
+impl<T,E> ResultCheckAnyToError<T,E> for Result<T,E>
+where E:Debug{
+    fn to_error(self)->Error{
+        match self{
+            Ok(_)=>{return ().into();},
+            Err(e)=>{
+                return format!("{:?}",e).into();
+            }
+        }
+    }
+    fn on_error_any(self,e:&'static str)->Result<T,Error>{
+        match self{
+            Ok(_v)=>{Ok(_v)},
+            Err(_e)=>{
+                Err(format!("{:?} => {e}",_e).into())
+            }
+        }
+    }
+}
+
+#[allow(dead_code)]
+
+pub trait ResultCheckCrate<T>{
+    fn on_error(self,tag:&'static str)->Result<T,Error>;
+}
+
+impl<T> ResultCheckCrate<T> for Result<T,Error>{
+    fn on_error(self,tag:&'static str)->Result<T,Error>{
+        match self{
+            Ok(v)=>{Ok(v)},
+            Err(_e)=>{
+                Err(format!("{:?} => {tag}",_e).into())
+            }
+        }
+    }
+}
+
+//--------------------------------
+//result end
+//--------------------------------
+
 #[derive(Debug)]
 pub struct Error{
     pub _e:ErrType
@@ -40,6 +94,14 @@ impl From<()> for Error{
     fn from(_:())->Error{
         Error{
             _e:ErrType::None
+        }
+    }
+}
+
+impl From<String> for Error{
+    fn from(v:String)->Error{
+        Error{
+            _e:ErrType::String(v)
         }
     }
 }

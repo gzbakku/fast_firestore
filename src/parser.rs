@@ -8,7 +8,7 @@ use firestore_grpc::v1::{
 // use firestore_grpc::prost_types;
 use prost_types::Timestamp;
 use std::time::{SystemTime, UNIX_EPOCH,Duration};
-use crate::{Error};
+use crate::Error;
 
 fn unix_epoch_time()->Result<Duration,Error>{
     match SystemTime::now().duration_since(UNIX_EPOCH) {
@@ -51,10 +51,11 @@ pub fn JsonToDoc(v:&JsonValue)->Result<Document,Error>{
                 Some(k)=>{
                     match k{
                         ValueType::MapValue(m)=>{
+                            let time:Timestamp = timestamp()?;
                             let build = Document{
                                 name:String::new(),
                                 fields:m.fields,
-                                create_time:Some(timestamp()?),
+                                create_time:Some(time),
                                 update_time:None
                             };
                             return Ok(build);

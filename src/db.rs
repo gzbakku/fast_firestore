@@ -1,15 +1,18 @@
 use firestore_grpc::tonic::{
     metadata::{MetadataValue,Ascii},
-    transport::{Channel},
+    transport::Channel,
     Request
 };
-use firestore_grpc::v1::{
-    firestore_client::FirestoreClient
-};
+// use firestore_grpc::v1::{
+//     firestore_client::FirestoreClient
+// };
 // use firestore_grpc::tonic::client;
 // use firestore_grpc::toni
-use crate::{Error};
+// use crate::{Error};
 // use crate::{Path};
+
+use firestore_grpc::v1::firestore_client::FirestoreClient;
+use crate::common::{ResultCheckAnyToError,ResultCheckCrate,Error};
 
 use json::JsonValue;
 
@@ -17,7 +20,7 @@ const URL: &'static str = "https://firestore.googleapis.com";
 // const DOMAIN: &'static str = "firestore.googleapis.com";
 
 
-use std::{time::Instant};
+use std::time::Instant;
 
 #[derive(Debug,Clone)]
 pub struct DB{
@@ -31,17 +34,17 @@ pub struct DB{
 
 impl DB{
     pub async fn get_token(&mut self)->Result<MetadataValue<Ascii>,Error>{
-        self.check_time().await?;
+        self.check_time().await.on_error("check_time")?;
         return Ok(self.token.clone());
     }
     pub async fn check_time(&mut self)->Result<(),Error>{
         if self.time.elapsed().as_secs() > 1500{
             match &self.creds{
                 Some(creds)=>{
-                    self.token = generate_token_json(creds).await?;
+                    self.token = generate_token_json(creds).await.on_error("generate_token_json")?;
                 },
                 None=>{
-                    self.token = generate_token(&self.path).await?;
+                    self.token = generate_token(&self.path).await.on_error("generate_token")?;
                 }
             }
             self.time = Instant::now();
@@ -56,8 +59,8 @@ impl DB{
             project_id:project_id,
             path:creds_file_location.clone(),
             time:Instant::now(),
-            token:generate_token(&creds_file_location).await?,
-            channel:FirestoreClient::connect(URL).await?,
+            token:generate_token(&creds_file_location).await.on_error("generate_token")?,
+            channel:FirestoreClient::connect(URL).await.on_error_any("FirestoreClient-connect")?,
             creds:None
         });
     }
@@ -69,8 +72,8 @@ impl DB{
             project_id:project_id,
             path:String::new(),
             time:Instant::now(),
-            token:generate_token_json(&creds).await?,
-            channel:FirestoreClient::connect(URL).await?,
+            token:generate_token_json(&creds).await.on_error("generate_token_json")?,
+            channel:FirestoreClient::connect(URL).await.on_error_any("FirestoreClient-connect")?,
             creds:Some(creds)
         });
     }
@@ -84,8 +87,8 @@ impl DB{
 }
 
 pub async fn generate_token(path:&str)->Result<MetadataValue<Ascii>,Error>{
-    let bearer_token = format!("Bearer {}", get_token(path).await?);
-    let header_value = MetadataValue::from_str(&bearer_token)?;
+    let bearer_token = format!("Bearer {}", get_token(path).await.on_error("get_token")?);
+    let header_value = MetadataValue::from_str(&bearer_token).on_error_any("MetadataValue-from_str")?;
     return Ok(header_value);
 }
 
@@ -100,19 +103,19 @@ pub async fn get_token(path:&str)->Result<String,Error>{
                     return Ok(s.to_string());
                 },
                 None=>{
-                    return Err(().into());
+                    return Err("no-token-gcp_access_token".into());
                 },
             }
         },
         Err(_e)=>{
-            return Err(().into());
+            return Err(format!("gcp_access_token => {:?}",_e).into());
         }
     }
 }
 
 pub async fn generate_token_json(creds:&JsonValue)->Result<MetadataValue<Ascii>,Error>{
-    let bearer_token = format!("Bearer {}", get_token_json(creds).await?);
-    let header_value = MetadataValue::from_str(&bearer_token)?;
+    let bearer_token = format!("Bearer {}", get_token_json(creds).await.on_error("get_token_json")?);
+    let header_value = MetadataValue::from_str(&bearer_token).on_error_any("MetadataValue-from_str")?;
     return Ok(header_value);
 }
 
@@ -128,12 +131,12 @@ pub async fn get_token_json(creds:&JsonValue)->Result<String,Error>{
                     return Ok(s.to_string());
                 },
                 None=>{
-                    return Err(().into());
+                    return Err("get_token_json".into());
                 },
             }
         },
         Err(_e)=>{
-            return Err(().into());
+            return Err(format!("gcp_access_token-init_json => {:?}",_e).into());
         }
     }
 }
