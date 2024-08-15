@@ -12,8 +12,8 @@ use firestore_grpc::google::firestore::v1::{
         Filter,CompositeFilter,FieldFilter,
         filter::FilterType
     },
-    value::ValueType,
-    ArrayValue
+    // value::ValueType,
+    // ArrayValue
 };
 
 // ValueType
@@ -280,20 +280,33 @@ fn build_filters(
 }
 
 fn build_filter(key:String,op:i32,value:Value)->Filter{
-    let v;
-    if op == 8{
-        v = Value{
-            value_type:Some(
-                ValueType::ArrayValue(
-                    ArrayValue{
-                        values:vec![value]
-                    }
-                )
-            )
-        };
-    } else {
-        v = value;
-    }
+    // let v;
+    // if op == 8{
+    //     let is_array;
+    //     match value{
+    //         ValueType::ArrayValue(_v)=>{
+    //             v = Value{
+    //                 value_type:Some(ValueType::ArrayValue(
+    //                     _v
+    //                 ))
+    //             };
+    //         },
+    //         _=>{
+    //             v = Value{
+    //                 value_type:Some(
+    //                     ValueType::ArrayValue(
+    //                         ArrayValue{
+    //                             values:vec![value]
+    //                         }
+    //                     )
+    //                 )
+    //             };
+    //         }
+    //     }
+    // } else {
+    //     v = value;
+    // }
+    let v = value;
     Filter{
         filter_type:Some(FilterType::FieldFilter(FieldFilter{
             field:Some(FieldReference{
