@@ -1,6 +1,6 @@
 [package]
 name = "fast_firestore"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,14 +13,15 @@ categories = ["database"]
 license="MIT"
 
 # firestore_grpc = "0.154.0"
+# firestore_grpc = "0.224.0"
 
 [dependencies]
-async-trait = "0.1.81"
-firestore_grpc = "0.224.0"
+async-trait = "0.1.88"
+firestore_grpc = "0.268.0"
 futures = "0.3.28"
 gcp_access_token = "0.1.4"
 json = "0.12.4"
-prost-types = "0.9"
+prost-types = "0.9.0"
 tokio = { version = "1.38.1", features = ["full"] }
 
 
